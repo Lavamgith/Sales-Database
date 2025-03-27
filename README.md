@@ -1,2 +1,2 @@
 # Sales-Database
-Project
+Project comprised of four team members.
