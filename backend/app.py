@@ -1,9 +1,14 @@
+import os
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 
+# Get environment variables
+db_user = os.getenv('DB_USER')
+db_password = os.getenv('DB_PASSWORD')
+
 # Configure Flask app
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://new_user:new_password@localhost/magazine_db'
+app.config['SQLALCHEMY_DATABASE_URI'] = f'mysql+pymysql://{db_user}:{db_password}@localhost/magazine_db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Initialize SQLAlchemy
