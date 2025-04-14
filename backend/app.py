@@ -9,7 +9,7 @@ db_password = os.getenv('DB_PASSWORD')
 
 # Configure Flask app
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = f'mysql+pymysql://{db_user}:{db_password}@localhost/magazine_db'
+app.config['SQLALCHEMY_DATABASE_URI'] = f'mysql+pymysql://{db_user}:{db_password}@localhost/magazinesales'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Initialize SQLAlchemy
@@ -17,47 +17,61 @@ db = SQLAlchemy(app)
 
 # ---------------------- ENTITY MODELS ----------------------
 
+class Admin(db.Model):
+    __tablename__ = 'admin'
+    adminID = db.Column(db.Integer, primary_key=True)
+    phoneNumber = db.Column(db.String(20), nullable=False)
+    name = db.Column(db.String(100), nullable=False)
+    email = db.Column(db.String(100), nullable=False)
+    role = db.Column(db.String(40), nullable=False)
+
+    def as_dict(self):
+        return {col.name: getattr(self, col.name) for col in self.__table__.columns}
+    
 class Magazine(db.Model):
     __tablename__ = 'magazine'
-    magazine_id = db.Column(db.Integer, primary_key=True)
-    website = db.Column(db.String(255))
-    year_published = db.Column(db.Integer)
-    total_subscribers = db.Column(db.Integer)
-    magCost = db.Column(db.Float)
-    total_earnings = db.Column(db.Float)
+    magazineTitle = db.Column(db.String(100), nullable=False)
+    yearPublished = db.Column(db.Integer, nullable=False)
+    magazineCost = db.Column(db.Numeric(5, 2), nullable=False)
+    totalSubscribers = db.Column(db.Integer, nullable=False)
+    totalEarnings = db.Column(db.Numeric(10, 2), nullable=False)
+    website = db.Column(db.String(100), nullable=False)
+    magazineID = db.Column(db.Integer, primary_key=True)
+    adminID = db.Column(db.Integer, db.ForeignKey('admin.adminID', ondelete='CASCADE'), nullable=False)
+    adminID2 = db.Column(db.Integer, db.ForeignKey('admin.adminID', ondelete='CASCADE'), nullable=False)
 
     # Relationships
-    volumes = db.relationship('Volume', backref='magazine', cascade='all, delete-orphan')
-    articles = db.relationship('Article', backref='magazine', cascade='all, delete-orphan')
-    sales = db.relationship('Sale', backref='magazine', cascade='all, delete-orphan')
+    admin = db.relationship('Admin', foreign_keys=[adminID])
+    admin2 = db.relationship('Admin', foreign_keys=[adminID2])
 
     def as_dict(self):
         return {col.name: getattr(self, col.name) for col in self.__table__.columns}
 
 class Volume(db.Model):
     __tablename__ = 'volume'
-    vol_id = db.Column(db.Integer, primary_key=True)
-    magazine_id = db.Column(db.Integer, db.ForeignKey('magazine.magazine_id', ondelete='CASCADE'), nullable=False)
-    vol_num = db.Column(db.Integer)
-    year_published = db.Column(db.Integer)
-    subscriber_count = db.Column(db.Integer)
-    volCost = db.Column(db.Float)
+    volID = db.Column(db.Integer, primary_key=True)
+    magID = db.Column(db.Integer, db.ForeignKey('magazine.magazineID', ondelete='CASCADE'), nullable=False)
+    volNum = db.Column(db.Integer, nullable=False)
+    yearPublished = db.Column(db.Integer, nullable=False)
+    volumeCost = db.Column(db.Numeric(5, 2), nullable=False)
+    subscriberCount = db.Column(db.Integer, nullable=False)
 
     # Relationships
     issues = db.relationship('Issue', backref='volume', cascade='all, delete-orphan')
-    sales = db.relationship('Sale', backref='volume', cascade='all, delete-orphan')
+    # Remove this line:
+    # sales = db.relationship('Sale', backref='volume', cascade='all, delete-orphan')
 
     def as_dict(self):
         return {col.name: getattr(self, col.name) for col in self.__table__.columns}
 
 class Issue(db.Model):
     __tablename__ = 'issue'
-    issue_id = db.Column(db.Integer, primary_key=True)
-    vol_id = db.Column(db.Integer, db.ForeignKey('volume.vol_id', ondelete='CASCADE'), nullable=False)
-    iss_num = db.Column(db.Integer)
-    season = db.Column(db.String(50))
-    back_copies_sold = db.Column(db.Integer)
-    issCost = db.Column(db.Float)
+    issueID = db.Column(db.Integer, primary_key=True)
+    volID = db.Column(db.Integer, db.ForeignKey('volume.volID', ondelete='CASCADE'), nullable=False)
+    issNum = db.Column(db.Integer, nullable=False)
+    season = db.Column(db.String(6), nullable=False)
+    issueCost = db.Column(db.Numeric(5, 2), nullable=False)
+    backCopiesSold = db.Column(db.Integer, nullable=False)
 
     # Relationships
     articles = db.relationship('Article', backref='issue', cascade='all, delete-orphan')
@@ -65,12 +79,24 @@ class Issue(db.Model):
 
     def as_dict(self):
         return {col.name: getattr(self, col.name) for col in self.__table__.columns}
+    
+class Article(db.Model):
+    __tablename__ = 'article'
+    articleTitle = db.Column(db.String(100), primary_key=True)
+    authorID = db.Column(db.Integer, db.ForeignKey('author.authorID', ondelete='CASCADE'), nullable=False)
+    magID2 = db.Column(db.Integer, db.ForeignKey('magazine.magazineID', ondelete='CASCADE'), nullable=False)
+    volID2 = db.Column(db.Integer, db.ForeignKey('volume.volID', ondelete='CASCADE'), nullable=False)
+    issueID = db.Column(db.Integer, db.ForeignKey('issue.issueID', ondelete='CASCADE'), nullable=False)
+    topic = db.Column(db.String(50), nullable=False)
+
+    def as_dict(self):
+        return {col.name: getattr(self, col.name) for col in self.__table__.columns}
 
 class Author(db.Model):
     __tablename__ = 'author'
-    author_id = db.Column(db.Integer, primary_key=True)
+    authorID = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
-    email = db.Column(db.String(100), unique=True, nullable=False)
+    email = db.Column(db.String(100), nullable=False)
 
     # Relationships
     articles = db.relationship('Article', backref='author', cascade='all, delete-orphan')
@@ -78,24 +104,13 @@ class Author(db.Model):
     def as_dict(self):
         return {col.name: getattr(self, col.name) for col in self.__table__.columns}
 
-class Article(db.Model):
-    __tablename__ = 'article'
-    article_title = db.Column(db.String(255), primary_key=True)
-    author_id = db.Column(db.Integer, db.ForeignKey('author.author_id', ondelete='CASCADE'), nullable=False)
-    issue_id = db.Column(db.Integer, db.ForeignKey('issue.issue_id', ondelete='CASCADE'), nullable=False)
-    magazine_id = db.Column(db.Integer, db.ForeignKey('magazine.magazine_id', ondelete='CASCADE'), nullable=False)
-    topic = db.Column(db.String(255))
-
-    def as_dict(self):
-        return {col.name: getattr(self, col.name) for col in self.__table__.columns}
-
 class Customer(db.Model):
     __tablename__ = 'customer'
-    customer_id = db.Column(db.Integer, primary_key=True)
+    customerID = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
-    email = db.Column(db.String(100), unique=True, nullable=False)
-    phone = db.Column(db.String(20))
-    address = db.Column(db.String(255))
+    email = db.Column(db.String(100), nullable=False)
+    phone = db.Column(db.String(20), nullable=False)
+    address = db.Column(db.String(75), nullable=False)
 
     # Relationships
     sales = db.relationship('Sale', backref='customer', cascade='all, delete-orphan')
@@ -103,29 +118,29 @@ class Customer(db.Model):
     def as_dict(self):
         return {col.name: getattr(self, col.name) for col in self.__table__.columns}
 
-class Discount(db.Model):
-    __tablename__ = 'discount'
-    discount_id = db.Column(db.Integer, primary_key=True)
-    min_volumes = db.Column(db.Integer)
-    max_volumes = db.Column(db.Integer)
-    discount_percentage = db.Column(db.Float)
-    discount_code = db.Column(db.String(50), unique=True)
-
-    # Relationships
-    sales = db.relationship('Sale', backref='discount', cascade='all, delete-orphan')
+class Sale(db.Model):
+    __tablename__ = 'sales'
+    saleID = db.Column(db.Integer, primary_key=True)
+    customerID = db.Column(db.Integer, db.ForeignKey('customer.customerID', ondelete='CASCADE'), nullable=False)
+    discountID = db.Column(db.Integer, db.ForeignKey('discount.discountID', ondelete='SET NULL'), server_default='0', nullable=True) # Changed nullable=False to nullable=True
+    issID = db.Column(db.Integer, db.ForeignKey('issue.issueID', ondelete='CASCADE'), nullable=False)
+    issID2 = db.Column(db.Integer, server_default='0')
+    issID3 = db.Column(db.Integer, server_default='0')
+    earning = db.Column(db.Numeric(10, 2), nullable=False)
 
     def as_dict(self):
         return {col.name: getattr(self, col.name) for col in self.__table__.columns}
 
-class Sale(db.Model):
-    __tablename__ = 'sale'
-    sale_id = db.Column(db.Integer, primary_key=True)
-    customer_id = db.Column(db.Integer, db.ForeignKey('customer.customer_id', ondelete='CASCADE'), nullable=False)
-    magazine_id = db.Column(db.Integer, db.ForeignKey('magazine.magazine_id', ondelete='CASCADE'))
-    vol_id = db.Column(db.Integer, db.ForeignKey('volume.vol_id', ondelete='CASCADE'))
-    issue_id = db.Column(db.Integer, db.ForeignKey('issue.issue_id', ondelete='CASCADE'))
-    discount_id = db.Column(db.Integer, db.ForeignKey('discount.discount_id', ondelete='SET NULL'))
-    earning = db.Column(db.Float)
+class Discount(db.Model):
+    __tablename__ = 'discount'
+    discountID = db.Column(db.Integer, primary_key=True, server_default='0')
+    minVolumes = db.Column(db.Integer, nullable=False)
+    maxVolumes = db.Column(db.Integer, nullable=False)
+    discountPercentage = db.Column(db.Integer, nullable=False)
+    discountCode = db.Column(db.String(10))
+
+    # Relationships
+    sales = db.relationship('Sale', backref='discount', cascade='all, delete-orphan')
 
     def as_dict(self):
         return {col.name: getattr(self, col.name) for col in self.__table__.columns}
@@ -142,7 +157,8 @@ def get_model(entity):
         'articles': Article,
         'customers': Customer,
         'discounts': Discount,
-        'sales': Sale
+        'sales': Sale,
+        'admins': Admin
     }
     return models.get(entity)
 
@@ -160,10 +176,92 @@ def create_entity(entity):
         
         # Special handling for Article since it has a string primary key
         if entity == 'articles':
-            if 'article_title' not in data:
+            if 'articleTitle' not in data:
                 return jsonify({"error": "Article title is required"}), 400
         
-        new_entry = model(**data)
+        # Adjusting for Magazine attributes
+        if entity == 'magazines':
+            new_entry = model(
+                magazineTitle=data.get('magazineTitle'),
+                yearPublished=data.get('yearPublished'),
+                magazineCost=data.get('magazineCost'),
+                totalSubscribers=data.get('totalSubscribers'),
+                totalEarnings=data.get('totalEarnings'),
+                website=data.get('website'),
+                magazineID=data.get('magazineID'),
+                adminID=data.get('adminID'),
+                adminID2=data.get('adminID2')
+            )
+        elif entity == 'admins':
+            new_entry = model(
+                adminID=data.get('adminID'),
+                phoneNumber=data.get('phoneNumber'),
+                name=data.get('name'),
+                email=data.get('email'),
+                role=data.get('role')
+            )
+        elif entity == 'volumes':
+            new_entry = model(
+                volID=data.get('volID'),
+                magID=data.get('magID'),
+                volNum=data.get('volNum'),
+                yearPublished=data.get('yearPublished'),
+                volumeCost=data.get('volumeCost'),
+                subscriberCount=data.get('subscriberCount')
+            )
+        elif entity == 'issues':
+            new_entry = model(
+                issueID=data.get('issueID'),
+                volID=data.get('volID'),
+                issNum=data.get('issNum'),
+                season=data.get('season'),
+                issueCost=data.get('issueCost'),
+                backCopiesSold=data.get('backCopiesSold')
+            )
+        elif entity == 'articles':
+            new_entry = model(
+                articleTitle=data.get('articleTitle'),
+                authorID=data.get('authorID'),
+                magID2=data.get('magID2'),
+                volID2=data.get('volID2'),
+                issueID=data.get('issueID'),
+                topic=data.get('topic')
+            )
+        elif entity == 'authors':
+            new_entry = model(
+                authorID=data.get('authorID'),
+                name=data.get('name'),
+                email=data.get('email')
+            )
+        elif entity == 'customers':
+            new_entry = model(
+                customerID=data.get('customerID'),
+                name=data.get('name'),
+                email=data.get('email'),
+                phone=data.get('phone'),
+                address=data.get('address')
+            )
+        elif entity == 'sales':
+            new_entry = model(
+                saleID=data.get('saleID'),
+                customerID=data.get('customerID'),
+                discountID=data.get('discountID'),
+                issID=data.get('issID'),
+                issID2=data.get('issID2'),
+                issID3=data.get('issID3'),
+                earning=data.get('earning')
+            )
+        elif entity == 'discounts':
+            new_entry = model(
+                discountID=data.get('discountID'),
+                minVolumes=data.get('minVolumes'),
+                maxVolumes=data.get('maxVolumes'),
+                discountPercentage=data.get('discountPercentage'),
+                discountCode=data.get('discountCode')
+            )
+        else:
+            new_entry = model(**data)
+        
         db.session.add(new_entry)
         db.session.commit()
         return jsonify(new_entry.as_dict()), 201
@@ -195,15 +293,30 @@ def get_entity(entity, id):
         return jsonify({"error": "Invalid entity"}), 404
     
     try:
-        # Handle Article which has string ID
-        if entity == 'articles':
+        # Adjusting for primary key names
+        if entity == 'admins':
+            record = model.query.get(int(id))
+        elif entity == 'magazines':
+            record = model.query.get(int(id))
+        elif entity == 'volumes':
+            record = model.query.get(int(id))
+        elif entity == 'issues':
+            record = model.query.get(int(id))
+        elif entity == 'articles':
             record = model.query.get(id)
+        elif entity == 'authors':
+            record = model.query.get(int(id))
+        elif entity == 'customers':
+            record = model.query.get(int(id))
+        elif entity == 'sales':
+            record = model.query.get(int(id))
+        elif entity == 'discounts':
+            record = model.query.get(int(id))
         else:
             record = model.query.get(int(id))
         
         if not record:
-            return jsonify({"error": f"{entity[:-1]} not found"}), 404
-        
+            return jsonify({"error": f"{entity.capitalize()} not found"}), 404
         return jsonify(record.as_dict())
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -216,23 +329,37 @@ def update_entity(entity, id):
         return jsonify({"error": "Invalid entity"}), 404
     
     try:
-        # Handle Article which has string ID
-        if entity == 'articles':
-            record = model.query.get(id)
-        else:
-            record = model.query.get(int(id))
-        
-        if not record:
-            return jsonify({"error": f"{entity[:-1]} not found"}), 404
-        
         data = request.get_json()
         if not data:
             return jsonify({"error": "No data provided"}), 400
         
-        for key, value in data.items():
-            if hasattr(record, key):
-                setattr(record, key, value)
+        # Adjusting for primary key names
+        if entity == 'admins':
+            record = model.query.get(int(id))
+        elif entity == 'magazines':
+            record = model.query.get(int(id))
+        elif entity == 'volumes':
+            record = model.query.get(int(id))
+        elif entity == 'issues':
+            record = model.query.get(int(id))
+        elif entity == 'articles':
+            record = model.query.get(id)
+        elif entity == 'authors':
+            record = model.query.get(int(id))
+        elif entity == 'customers':
+            record = model.query.get(int(id))
+        elif entity == 'sales':
+            record = model.query.get(int(id))
+        elif entity == 'discounts':
+            record = model.query.get(int(id))
+        else:
+            record = model.query.get(int(id))
         
+        if not record:
+            return jsonify({"error": f"{entity.capitalize()} not found"}), 404
+        
+        for key, value in data.items():
+            setattr(record, key, value)
         db.session.commit()
         return jsonify(record.as_dict())
     
@@ -251,22 +378,34 @@ def delete_entity(entity, id):
         return jsonify({"error": "Invalid entity"}), 404
     
     try:
-        # Handle Article which has string ID
-        if entity == 'articles':
+        # Adjusting for primary key names
+        if entity == 'admins':
+            record = model.query.get(int(id))
+        elif entity == 'magazines':
+            record = model.query.get(int(id))
+        elif entity == 'volumes':
+            record = model.query.get(int(id))
+        elif entity == 'issues':
+            record = model.query.get(int(id))
+        elif entity == 'articles':
             record = model.query.get(id)
+        elif entity == 'authors':
+            record = model.query.get(int(id))
+        elif entity == 'customers':
+            record = model.query.get(int(id))
+        elif entity == 'sales':
+            record = model.query.get(int(id))
+        elif entity == 'discounts':
+            record = model.query.get(int(id))
         else:
             record = model.query.get(int(id))
         
         if not record:
-            return jsonify({"error": f"{entity[:-1]} not found"}), 404
+            return jsonify({"error": f"{entity.capitalize()} not found"}), 404
         
         db.session.delete(record)
         db.session.commit()
-        return jsonify({"message": f"{entity[:-1]} deleted successfully"})
-    
-    except exc.IntegrityError as e:
-        db.session.rollback()
-        return jsonify({"error": "Cannot delete due to foreign key constraints", "details": str(e)}), 400
+        return jsonify({"message": f"{entity.capitalize()} deleted successfully"})
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
