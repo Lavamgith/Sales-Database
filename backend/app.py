@@ -2,6 +2,7 @@ import os
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import exc
+from sqlalchemy.inspection import inspect
 
 # Get environment variables
 db_user = os.getenv('DB_USER')
@@ -27,7 +28,7 @@ class Admin(db.Model):
 
     def as_dict(self):
         return {col.name: getattr(self, col.name) for col in self.__table__.columns}
-    
+
 class Magazine(db.Model):
     __tablename__ = 'magazine'
     magazineTitle = db.Column(db.String(100), nullable=False)
@@ -40,7 +41,6 @@ class Magazine(db.Model):
     adminID = db.Column(db.Integer, db.ForeignKey('admin.adminID', ondelete='CASCADE'), nullable=False)
     adminID2 = db.Column(db.Integer, db.ForeignKey('admin.adminID', ondelete='CASCADE'), nullable=False)
 
-    # Relationships
     admin = db.relationship('Admin', foreign_keys=[adminID])
     admin2 = db.relationship('Admin', foreign_keys=[adminID2])
 
@@ -56,10 +56,7 @@ class Volume(db.Model):
     volumeCost = db.Column(db.Numeric(5, 2), nullable=False)
     subscriberCount = db.Column(db.Integer, nullable=False)
 
-    # Relationships
     issues = db.relationship('Issue', backref='volume', cascade='all, delete-orphan')
-    # Remove this line:
-    # sales = db.relationship('Sale', backref='volume', cascade='all, delete-orphan')
 
     def as_dict(self):
         return {col.name: getattr(self, col.name) for col in self.__table__.columns}
@@ -73,13 +70,12 @@ class Issue(db.Model):
     issueCost = db.Column(db.Numeric(5, 2), nullable=False)
     backCopiesSold = db.Column(db.Integer, nullable=False)
 
-    # Relationships
     articles = db.relationship('Article', backref='issue', cascade='all, delete-orphan')
     sales = db.relationship('Sale', backref='issue', cascade='all, delete-orphan')
 
     def as_dict(self):
         return {col.name: getattr(self, col.name) for col in self.__table__.columns}
-    
+
 class Article(db.Model):
     __tablename__ = 'article'
     articleTitle = db.Column(db.String(100), primary_key=True)
@@ -98,7 +94,6 @@ class Author(db.Model):
     name = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(100), nullable=False)
 
-    # Relationships
     articles = db.relationship('Article', backref='author', cascade='all, delete-orphan')
 
     def as_dict(self):
@@ -112,7 +107,6 @@ class Customer(db.Model):
     phone = db.Column(db.String(20), nullable=False)
     address = db.Column(db.String(75), nullable=False)
 
-    # Relationships
     sales = db.relationship('Sale', backref='customer', cascade='all, delete-orphan')
 
     def as_dict(self):
@@ -122,7 +116,7 @@ class Sale(db.Model):
     __tablename__ = 'sales'
     saleID = db.Column(db.Integer, primary_key=True)
     customerID = db.Column(db.Integer, db.ForeignKey('customer.customerID', ondelete='CASCADE'), nullable=False)
-    discountID = db.Column(db.Integer, db.ForeignKey('discount.discountID', ondelete='SET NULL'), server_default='0', nullable=True) # Changed nullable=False to nullable=True
+    discountID = db.Column(db.Integer, db.ForeignKey('discount.discountID', ondelete='SET NULL'), server_default='0', nullable=True)
     issID = db.Column(db.Integer, db.ForeignKey('issue.issueID', ondelete='CASCADE'), nullable=False)
     issID2 = db.Column(db.Integer, server_default='0')
     issID3 = db.Column(db.Integer, server_default='0')
@@ -139,7 +133,6 @@ class Discount(db.Model):
     discountPercentage = db.Column(db.Integer, nullable=False)
     discountCode = db.Column(db.String(10))
 
-    # Relationships
     sales = db.relationship('Sale', backref='discount', cascade='all, delete-orphan')
 
     def as_dict(self):
@@ -147,7 +140,6 @@ class Discount(db.Model):
 
 # ---------------------- CRUD ROUTES ----------------------
 
-# Helper function to get model by entity name
 def get_model(entity):
     models = {
         'magazines': Magazine,
@@ -162,110 +154,32 @@ def get_model(entity):
     }
     return models.get(entity)
 
-# ➤ POST (CREATE)
+def get_primary_key(model):
+    inspector = inspect(model)
+    primary_key_attributes = [pk.name for pk in inspector.primary_key]
+    if primary_key_attributes:
+        return primary_key_attributes[0]
+    return None
+
 @app.route('/<entity>', methods=['POST'])
 def create_entity(entity):
     model = get_model(entity)
     if not model:
         return jsonify({"error": "Invalid entity"}), 404
-    
+
     try:
         data = request.get_json()
         if not data:
             return jsonify({"error": "No data provided"}), 400
-        
-        # Special handling for Article since it has a string primary key
-        if entity == 'articles':
-            if 'articleTitle' not in data:
-                return jsonify({"error": "Article title is required"}), 400
-        
-        # Adjusting for Magazine attributes
-        if entity == 'magazines':
-            new_entry = model(
-                magazineTitle=data.get('magazineTitle'),
-                yearPublished=data.get('yearPublished'),
-                magazineCost=data.get('magazineCost'),
-                totalSubscribers=data.get('totalSubscribers'),
-                totalEarnings=data.get('totalEarnings'),
-                website=data.get('website'),
-                magazineID=data.get('magazineID'),
-                adminID=data.get('adminID'),
-                adminID2=data.get('adminID2')
-            )
-        elif entity == 'admins':
-            new_entry = model(
-                adminID=data.get('adminID'),
-                phoneNumber=data.get('phoneNumber'),
-                name=data.get('name'),
-                email=data.get('email'),
-                role=data.get('role')
-            )
-        elif entity == 'volumes':
-            new_entry = model(
-                volID=data.get('volID'),
-                magID=data.get('magID'),
-                volNum=data.get('volNum'),
-                yearPublished=data.get('yearPublished'),
-                volumeCost=data.get('volumeCost'),
-                subscriberCount=data.get('subscriberCount')
-            )
-        elif entity == 'issues':
-            new_entry = model(
-                issueID=data.get('issueID'),
-                volID=data.get('volID'),
-                issNum=data.get('issNum'),
-                season=data.get('season'),
-                issueCost=data.get('issueCost'),
-                backCopiesSold=data.get('backCopiesSold')
-            )
-        elif entity == 'articles':
-            new_entry = model(
-                articleTitle=data.get('articleTitle'),
-                authorID=data.get('authorID'),
-                magID2=data.get('magID2'),
-                volID2=data.get('volID2'),
-                issueID=data.get('issueID'),
-                topic=data.get('topic')
-            )
-        elif entity == 'authors':
-            new_entry = model(
-                authorID=data.get('authorID'),
-                name=data.get('name'),
-                email=data.get('email')
-            )
-        elif entity == 'customers':
-            new_entry = model(
-                customerID=data.get('customerID'),
-                name=data.get('name'),
-                email=data.get('email'),
-                phone=data.get('phone'),
-                address=data.get('address')
-            )
-        elif entity == 'sales':
-            new_entry = model(
-                saleID=data.get('saleID'),
-                customerID=data.get('customerID'),
-                discountID=data.get('discountID'),
-                issID=data.get('issID'),
-                issID2=data.get('issID2'),
-                issID3=data.get('issID3'),
-                earning=data.get('earning')
-            )
-        elif entity == 'discounts':
-            new_entry = model(
-                discountID=data.get('discountID'),
-                minVolumes=data.get('minVolumes'),
-                maxVolumes=data.get('maxVolumes'),
-                discountPercentage=data.get('discountPercentage'),
-                discountCode=data.get('discountCode')
-            )
-        else:
-            new_entry = model(**data)
-        
+
+        if entity == 'articles' and 'articleTitle' not in data:
+            return jsonify({"error": "Article title is required"}), 400
+
+        new_entry = model(**data)
         db.session.add(new_entry)
         db.session.commit()
         return jsonify(new_entry.as_dict()), 201
-    
+
     except exc.IntegrityError as e:
         db.session.rollback()
         return jsonify({"error": "Database integrity error", "details": str(e)}), 400
@@ -273,13 +187,12 @@ def create_entity(entity):
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
 
-# ➤ GET (READ)
 @app.route('/<entity>', methods=['GET'])
 def get_all_entities(entity):
     model = get_model(entity)
     if not model:
         return jsonify({"error": "Invalid entity"}), 404
-    
+
     try:
         records = model.query.all()
         return jsonify([record.as_dict() for record in records])
@@ -291,78 +204,53 @@ def get_entity(entity, id):
     model = get_model(entity)
     if not model:
         return jsonify({"error": "Invalid entity"}), 404
-    
+
     try:
-        # Adjusting for primary key names
-        if entity == 'admins':
-            record = model.query.get(int(id))
-        elif entity == 'magazines':
-            record = model.query.get(int(id))
-        elif entity == 'volumes':
-            record = model.query.get(int(id))
-        elif entity == 'issues':
-            record = model.query.get(int(id))
-        elif entity == 'articles':
-            record = model.query.get(id)
-        elif entity == 'authors':
-            record = model.query.get(int(id))
-        elif entity == 'customers':
-            record = model.query.get(int(id))
-        elif entity == 'sales':
-            record = model.query.get(int(id))
-        elif entity == 'discounts':
+        primary_key = get_primary_key(model)
+        if not primary_key:
+            return jsonify({"error": "Could not determine primary key"}), 500
+
+        if getattr(model, primary_key).type.python_type is int:
             record = model.query.get(int(id))
         else:
-            record = model.query.get(int(id))
-        
+            record = model.query.get(id)
+
         if not record:
             return jsonify({"error": f"{entity.capitalize()} not found"}), 404
         return jsonify(record.as_dict())
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# ➤ PUT (UPDATE)
 @app.route('/<entity>/<id>', methods=['PUT'])
 def update_entity(entity, id):
     model = get_model(entity)
     if not model:
         return jsonify({"error": "Invalid entity"}), 404
-    
+
     try:
         data = request.get_json()
         if not data:
             return jsonify({"error": "No data provided"}), 400
-        
-        # Adjusting for primary key names
-        if entity == 'admins':
-            record = model.query.get(int(id))
-        elif entity == 'magazines':
-            record = model.query.get(int(id))
-        elif entity == 'volumes':
-            record = model.query.get(int(id))
-        elif entity == 'issues':
-            record = model.query.get(int(id))
-        elif entity == 'articles':
-            record = model.query.get(id)
-        elif entity == 'authors':
-            record = model.query.get(int(id))
-        elif entity == 'customers':
-            record = model.query.get(int(id))
-        elif entity == 'sales':
-            record = model.query.get(int(id))
-        elif entity == 'discounts':
+
+        primary_key = get_primary_key(model)
+        if not primary_key:
+            return jsonify({"error": "Could not determine primary key"}), 500
+
+        if getattr(model, primary_key).type.python_type is int:
             record = model.query.get(int(id))
         else:
-            record = model.query.get(int(id))
-        
+            record = model.query.get(id)
+
         if not record:
             return jsonify({"error": f"{entity.capitalize()} not found"}), 404
-        
+
         for key, value in data.items():
-            setattr(record, key, value)
+            if hasattr(record, key):
+                setattr(record, key, value)
+
         db.session.commit()
         return jsonify(record.as_dict())
-    
+
     except exc.IntegrityError as e:
         db.session.rollback()
         return jsonify({"error": "Database integrity error", "details": str(e)}), 400
@@ -370,39 +258,25 @@ def update_entity(entity, id):
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
 
-# ➤ DELETE
 @app.route('/<entity>/<id>', methods=['DELETE'])
 def delete_entity(entity, id):
     model = get_model(entity)
     if not model:
         return jsonify({"error": "Invalid entity"}), 404
-    
+
     try:
-        # Adjusting for primary key names
-        if entity == 'admins':
-            record = model.query.get(int(id))
-        elif entity == 'magazines':
-            record = model.query.get(int(id))
-        elif entity == 'volumes':
-            record = model.query.get(int(id))
-        elif entity == 'issues':
-            record = model.query.get(int(id))
-        elif entity == 'articles':
-            record = model.query.get(id)
-        elif entity == 'authors':
-            record = model.query.get(int(id))
-        elif entity == 'customers':
-            record = model.query.get(int(id))
-        elif entity == 'sales':
-            record = model.query.get(int(id))
-        elif entity == 'discounts':
+        primary_key = get_primary_key(model)
+        if not primary_key:
+            return jsonify({"error": "Could not determine primary key"}), 500
+
+        if getattr(model, primary_key).type.python_type is int:
             record = model.query.get(int(id))
         else:
-            record = model.query.get(int(id))
-        
+            record = model.query.get(id)
+
         if not record:
             return jsonify({"error": f"{entity.capitalize()} not found"}), 404
-        
+
         db.session.delete(record)
         db.session.commit()
         return jsonify({"message": f"{entity.capitalize()} deleted successfully"})
