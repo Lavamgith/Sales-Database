@@ -17,7 +17,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
 # ---------------------- ENTITY MODELS ----------------------
-
+# (Your existing model definitions remain the same)
 class Admin(db.Model):
     __tablename__ = 'admin'
     adminID = db.Column(db.Integer, primary_key=True)
@@ -280,6 +280,67 @@ def delete_entity(entity, id):
         db.session.delete(record)
         db.session.commit()
         return jsonify({"message": f"{entity.capitalize()} deleted successfully"})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/sales', methods=['POST'])
+def create_sale():
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "No data provided for sale"}), 400
+
+        customer_id = data.get('customerID')
+        iss_id = data.get('issID')
+        iss_id2 = data.get('issID2', 0)
+        iss_id3 = data.get('issID3', 0)
+
+        if not customer_id or not iss_id:
+            return jsonify({"error": "customerID and at least one issID are required"}), 400
+
+        customer = Customer.query.get(customer_id)
+        issue1 = Issue.query.get(iss_id)
+        issue2 = Issue.query.get(iss_id2) if iss_id2 != 0 else None
+        issue3 = Issue.query.get(iss_id3) if iss_id3 != 0 else None
+
+        if not customer or not issue1:
+            return jsonify({"error": "Invalid customerID or issID"}), 404
+
+        total_volumes = 1 + (1 if issue2 else 0) + (1 if issue3 else 0)
+        discount_to_apply = None
+
+        discounts = Discount.query.order_by(Discount.minVolumes.desc()).all() # Get discounts, highest min first
+
+        for discount in discounts:
+            if discount.minVolumes <= total_volumes and total_volumes <= discount.maxVolumes:
+                discount_to_apply = discount
+                break # Apply the first applicable discount (which will be the best due to ordering)
+
+        total_earning = issue1.issueCost + (issue2.issueCost if issue2 else 0) + (issue3.issueCost if issue3 else 0)
+
+        if discount_to_apply:
+            from decimal import Decimal
+            discount_percentage_decimal = Decimal(discount_to_apply.discountPercentage) / Decimal('100.00')
+            discount_amount = total_earning * discount_percentage_decimal
+            total_earning -= discount_amount
+
+        new_sale = Sale(
+            customerID=customer_id,
+            issID=iss_id,
+            issID2=iss_id2,
+            issID3=iss_id3,
+            earning=total_earning,
+            discountID=discount_to_apply.discountID if discount_to_apply else 0
+        )
+
+        db.session.add(new_sale)
+        db.session.commit()
+        return jsonify(new_sale.as_dict()), 201
+
+    except exc.IntegrityError as e:
+        db.session.rollback()
+        return jsonify({"error": "Database integrity error during sale creation", "details": str(e)}), 400
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
