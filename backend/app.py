@@ -3,6 +3,11 @@ from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import exc
 from sqlalchemy.inspection import inspect
+from sqlalchemy import func
+from flask_cors import CORS  # import CORS
+
+app = Flask(__name__)        #  initialize Flask app
+CORS(app)                    # enable CORS for the app
 
 # Get environment variables
 db_user = os.getenv('DB_USER')
@@ -299,39 +304,52 @@ def create_sale():
         if not customer_id or not iss_id:
             return jsonify({"error": "customerID and at least one issID are required"}), 400
 
+        # Verify customer and issue existence
         customer = Customer.query.get(customer_id)
         issue1 = Issue.query.get(iss_id)
         issue2 = Issue.query.get(iss_id2) if iss_id2 != 0 else None
         issue3 = Issue.query.get(iss_id3) if iss_id3 != 0 else None
 
-        if not customer or not issue1:
-            return jsonify({"error": "Invalid customerID or issID"}), 404
+        if not customer:
+            return jsonify({"error": "Customer not found"}), 404
+        if not issue1:
+            return jsonify({"error": "Issue with the given issID not found"}), 404
+        if iss_id2 != 0 and not issue2:
+            return jsonify({"error": "Issue with the given issID2 not found"}), 404
+        if iss_id3 != 0 and not issue3:
+            return jsonify({"error": "Issue with the given issID3 not found"}), 404
 
         total_volumes = 1 + (1 if issue2 else 0) + (1 if issue3 else 0)
+
+        # Fetch applicable discounts, ordered by minVolumes in descending order
+        discounts = Discount.query.order_by(Discount.minVolumes.desc()).all()
+
         discount_to_apply = None
-
-        discounts = Discount.query.order_by(Discount.minVolumes.desc()).all() # Get discounts, highest min first
-
         for discount in discounts:
-            if discount.minVolumes <= total_volumes and total_volumes <= discount.maxVolumes:
+            if discount.minVolumes <= total_volumes <= discount.maxVolumes:
                 discount_to_apply = discount
-                break # Apply the first applicable discount (which will be the best due to ordering)
+                break
 
         total_earning = issue1.issueCost + (issue2.issueCost if issue2 else 0) + (issue3.issueCost if issue3 else 0)
 
+        # Apply discount if applicable
         if discount_to_apply:
             from decimal import Decimal
             discount_percentage_decimal = Decimal(discount_to_apply.discountPercentage) / Decimal('100.00')
             discount_amount = total_earning * discount_percentage_decimal
             total_earning -= discount_amount
 
+        # Ensure valid discount ID (0 if no discount is applied)
+        discount_id = discount_to_apply.discountID if discount_to_apply else 0
+
+        # Create the sale record
         new_sale = Sale(
             customerID=customer_id,
             issID=iss_id,
-            issID2=iss_id2,
-            issID3=iss_id3,
+            issID2=iss_id2 if iss_id2 != 0 else None,  # Store only non-zero issue IDs, or None
+            issID3=iss_id3 if iss_id3 != 0 else None,  # Store only non-zero issue IDs, or None
             earning=total_earning,
-            discountID=discount_to_apply.discountID if discount_to_apply else 0
+            discountID=discount_id
         )
 
         db.session.add(new_sale)
