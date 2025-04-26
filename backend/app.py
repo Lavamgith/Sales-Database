@@ -122,8 +122,8 @@ class Sale(db.Model):
     customerID = db.Column(db.Integer, db.ForeignKey('customer.customerID', ondelete='CASCADE'), nullable=False)
     discountID = db.Column(db.Integer, db.ForeignKey('discount.discountID', ondelete='SET NULL'), server_default='0', nullable=True)
     issID = db.Column(db.Integer, db.ForeignKey('issue.issueID', ondelete='CASCADE'), nullable=False)
-    issID2 = db.Column(db.Integer, server_default='0')
-    issID3 = db.Column(db.Integer, server_default='0')
+    issID2 = db.Column(db.Integer, db.ForeignKey('issue.issueID', ondelete='CASCADE'), nullable=True, server_default='0')
+    issID3 = db.Column(db.Integer, db.ForeignKey('issue.issueID', ondelete='CASCADE'), nullable=True, server_default='0')
     earning = db.Column(db.Numeric(10, 2), nullable=False)
 
     def as_dict(self):
