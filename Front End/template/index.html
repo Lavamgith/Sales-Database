@@ -3,18 +3,29 @@
     <head>
         <meta charset = "UTF-8">
         <title>Magazine Co.</title>
+        <link rel="stylesheet" href="{{ 
+        url_for('static', filename='css/main.css')}}">
     </head>
     <body>
-        <form action = "id" method = "post">
-            <p>Log in.</p>
+        <form action = "/browse" method = "post">
+            <p>Please select an action</p>
             <br>
-            <p>Name</p>
-            <input type = "text" name = "name_input">
+
+            <a href="/customerlog" name="customer_log_tab" title="View all customers">View customer log</a>
             <br>
-            <p>id</p>
-            <input type = "number" name = "id_input">
             <br>
-            <input type ="submit" value = "Enter" id = "name_id_input">
+            <a href="/writerqueue" name="writer_tab" title="View upcoming writers">View writer queue</a>
+            <br>
+            <br>
+            <a href="/discount" name="discout_tab" title="Check the discounts">View current discounts</a>
+            <br>
+
+            <p>Or browse our releases</p>
+            <a href="/issues" name ="issues_tab" title="Look at the list of current issues">View released issues</a>
+            <br>
+            <br>
+            <a href="/shoppingwindow" name ="shopping_tab" title="Make a purchase">Purchase issues</a>
+         
         </form>
     </body>
 </html>

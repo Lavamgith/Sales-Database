@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset = "UTF-8">
+        <title>Magazine Co.</title>
+        <link rel="stylesheet" href="{{ 
+        url_for('static', filename='css/main.css')}}">
+    </head>
+    <body>
+        <form action = "/tryagain" method = "post">
+            <p>Please log in.</p>
+            <br>
+            <aside>Name: </aside>
+            <input type = "text" name = "name_input">
+            <br>
+            <br>
+            <aside>Id:</aside>
+            <input type = "number" name = "id_input">
+            <br>
+            <br>
+            <input type ="submit" value = "Enter" id = "name_id_input">
+            <br>
+
+            {% for message in get_flashed_messages()%}
+                    <p>{{message}}</p>
+            {% endfor %}
+        </form>
+    </body>
+</html>
