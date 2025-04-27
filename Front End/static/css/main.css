@@ -1,0 +1,24 @@
+body {
+    background-color: slategrey;
+    text-align: center;
+}
+
+p {
+    color: black;
+    font-family: BellMT;
+    font-size: 1.5em;
+    margin: 50px;
+}
+
+aside {
+    color: black;
+    font-family: BellMT;
+    font-size: large;
+    
+}
+
+a {
+    font-family: BellMT;
+    font-size: 1.3em;
+    margin: 50px;
+}
