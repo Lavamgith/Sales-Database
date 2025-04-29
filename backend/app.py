@@ -75,7 +75,7 @@ class Issue(db.Model):
     backCopiesSold = db.Column(db.Integer, nullable=False)
 
     articles = db.relationship('Article', backref='issue', cascade='all, delete-orphan')
-    sales = db.relationship('Sale', backref='issue', cascade='all, delete-orphan')
+    sales = db.relationship('Sale', backref='issue', cascade='all, delete-orphan', foreign_keys='Sale.issID')
 
     def as_dict(self):
         return {col.name: getattr(self, col.name) for col in self.__table__.columns}
