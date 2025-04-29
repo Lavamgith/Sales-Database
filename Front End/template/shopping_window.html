@@ -3,42 +3,45 @@
     <head>
         <meta charset = "UTF-8">
         <title>browse</title>
+        <link rel="stylesheet" href="{{ 
+        url_for('static', filename='css/main.css')}}">
     </head>
     <body>
-        <p>Check the magazine you wish to select from</p>
-        <br>
+        <form action = "/checkout" method = "post">
+            <p>Check the magazine you wish to select from</p>
+            <br>
 
-        <p>Choose one Magazine</p>
-        <caption>Civil War Navy</caption>
-        <input type = "checkbox" name = "Civil_War_Navy_input">
-        <br>
+            <p>Choose one Magazine</p>
+            <caption>Civil War Navy</caption>
+            <input type = "checkbox" name = "Civil_War_Navy_input">
+            <br>
 
-        <caption>Artillery Man</caption> 
-        <input type = "checkbox" name = "Artillery_Man_input">
-        <br>
+            <caption>Artillery Man</caption> 
+            <input type = "checkbox" name = "Artillery_Man_input">
+            <br>
 
-        <caption>Option 3</caption>
-        <input type = "checkbox" name = "Option_3_input">
-        <br>
-        <br>
+            <caption>Option 3</caption>
+            <input type = "checkbox" name = "Option_3_input">
+            <br>
+            <br>
 
-        <p>Select the volume and issue(s)</p>
-        <p>Volume number</p>
-        <input type ="number" name = "volume_input">
-        <br>
+            <p>Select the volume and issue(s)</p>
+            <p>Volume number</p>
+            <input type ="number" name = "volume_input">
+            <br>
         
-        <br>
-        <aside>Spring Issue</aside><input type ="checkbox" name = "spring_issue">
-        <br>
-        <aside>Summer Issue</aside><input type ="checkbox" name = "summer_issue">
-        <br>
-        <aside>Fall Issue</aside><input type ="checkbox" name = "fall_issue">
-        <br>
-        <aside>Winter Issue</aside><input type ="checkbox" name = "winter_issue">
-        <br>
-        <br>
+            <br>
+            <aside>Spring Issue</aside><input type ="checkbox" name = "spring_issue">
+            <br>
+            <aside>Summer Issue</aside><input type ="checkbox" name = "summer_issue">
+            <br>
+            <aside>Fall Issue</aside><input type ="checkbox" name = "fall_issue">
+            <br>
+            <aside>Winter Issue</aside><input type ="checkbox" name = "winter_issue">
+            <br>
+            <br>
 
-        <input type ="button" value ="Add to Cart" name ="issue_input">
-
+            <input type ="button" value ="Add to Cart" name ="issue_input">
+        </form>    
     </body>
 </html>
