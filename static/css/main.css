@@ -1,0 +1,46 @@
+body {
+    background-color: slategrey;
+    text-align: center;
+}
+
+p {
+    color: black;
+    font-family: BellMT;
+    font-size: 1.7em;
+    margin: 25px;
+}
+
+aside {
+    color: black;
+    font-family: BellMT;
+    font-size: 1.5;
+    
+}
+
+a {
+    font-family: BellMT;
+    font-size: 1.3em;
+    margin: 50px;
+}
+
+caption {
+    color: white;
+    font-family: BellMT;
+    font-size: 3;
+}
+
+tr {
+    font-family: BellMT;
+    font-size: 3;
+    text-align: justify;
+}
+
+
+
+head {
+    font-family: BellMT;
+    font-size: 5;
+    text-align: center;
+    padding-left: 35%;
+    padding-right: 35%;
+}

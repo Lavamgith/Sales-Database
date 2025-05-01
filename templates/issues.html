@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset = "UTF-8">
+        <title>Magazine Co.</title>
+        <link rel="stylesheet" href="{{ 
+        url_for('static', filename='css/main.css')}}">
+    </head>
+    <body>
+       
+
+        <p>Issues</p>
+        <table>
+            <tr>| Issue Number | Volume | Season released | Number Sold |</tr>
+            {% for entry in table %}  
+                <br>
+                <br>         
+                <tr>
+                    |
+                    {{entry.issueID}} |
+                    {{entry.volID}} |
+                    {{entry.season}} |
+                    ${{entry.issueCost}} |
+                    {{entry.backCopiesSold}} |
+                </tr>
+            {% endfor %}
+        </table>
+
+        <br>
+        <form action = "/index" method = "post">
+        <input type = submit value = "back to index" id = "return_index">
+        </form>
+        
+        
+    </body>
+</html>

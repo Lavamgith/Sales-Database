@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset = "UTF-8">
+        <title>Magazine Co.</title>
+        <link rel="stylesheet" href="{{ 
+        url_for('static', filename='css/main.css')}}">
+    </head>
+    <body>
+       
+        
+
+        
+        <form action = "/edits" method="post">
+        <br>
+        <br>
+        <input type="text" name="min" placeholder="Enter new MINIMUM">
+        <br>
+        <br>
+        <input type="text" name="max" placeholder="Enter new MAXIMUM volumes">
+        <br>
+        <br>
+        <input type="text" name="percentage" placeholder="Enter new percentage discount">
+        <br>
+        <br>
+        <input type="text" name="code" placeholder="Enter new discount Code">
+        <br>
+        <br>
+        <br>
+        <input type="submit" value="Submit Changes" id="update">
+        <br>
+        <br>
+        </form>
+        
+        <form action = "/index" method = "get">
+        <input type = submit value = "back to index" id = "return_index">
+        </form>
+        
+        {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    {% for msg in messages %}
+                        <p>{{msg}}</p>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        
+    </body>
+</html>

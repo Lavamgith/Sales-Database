@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset = "UTF-8">
+        <title>Magazine Co.</title>
+        <link rel="stylesheet" href="{{ 
+        url_for('static', filename='css/main.css')}}">
+    </head>
+    <body>
+       
+        <p>Currently active discounts</p>
+
+        <table>
+            <tr>| DiscountID | Minimum Issues | Maximum Issues | Discount Percent | Discount Code |</tr>
+            {% for entry in table %} 
+                <br>
+                <br>         
+                <tr>
+                    |
+                    {{entry.discountID}} |
+                    {{entry.minVolumes}} |
+                    {{entry.maxVolumes}} |
+                    {{entry.discountPercentage}} |
+                    {{entry.discountCode}} |
+                </tr>
+            {% endfor %}
+        </table>
+        <form action = "/edits" method="post" name = "id">
+        <br>
+        <br>
+        <input type="number" name="id" placeholder="Enter ID of entry">
+        <br>
+        <br>
+        <input type="text" name="min" placeholder="Enter new MINIMUM">
+        <br>
+        <br>
+        <input type="text" name="max" placeholder="Enter new MAXIMUM volumes">
+        <br>
+        <br>
+        <input type="text" name="percentage" placeholder="Enter new percentage discount">
+        <br>
+        <br>
+        <input type="text" name="code" placeholder="Enter new discount Code">
+        <br>
+        <br>
+        <br>
+        <input type="submit" value="Submit Changes" id="id">
+        <br>
+        <br>
+        <br>
+        <br>
+        </form>
+        <form action="/discounts" method = "post", name="delete">
+        <input type="number" name="delete" placeholder="Enter ID to delete entry">
+        <br>
+        <br>
+        <input type="submit" value="Remove promotion" id="delete">
+        <br>
+        </form>
+        <br>
+        <br>
+        <br>
+        </form>
+        
+        <form action = "/index" method = "get">
+        <input type = submit value = "back to index" id = "return_index">
+        </form>
+        
+        {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    {% for msg in messages %}
+                        <p>{{msg}}</p>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        
+    </body>
+</html>

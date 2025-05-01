@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<script src="https://code.jquery.com/jquery-3.7.1.js" integrity="sha256-eKhayi8LEQwp4NKxN+CfCh+3qOVUtJn3QNZ0TciWLP4=" crossorigin="anonymous"></script>
+
+<html>
+    <head>
+        <meta charset = "UTF-8">
+        <title>Magazine Co.</title>
+        <link rel="stylesheet" href="{{ 
+        url_for('static', filename='css/main.css')}}">
+    </head>
+    <body>
+        
+        <p>Sale log</p>
+        <br>
+        <table>
+            <tr>| SaleID | CustomerID | DiscountID | IssueID | Earnings |</tr>
+            {% for entry in table %} 
+                <br>
+                <br>         
+                <tr>
+                    |
+                    {{entry.saleID}} |
+                    {{entry.customerID}} |
+                    {{entry.discountID}} |
+                    {{entry.issID}} |
+                    ${{entry.earning}} |
+                </tr>
+            {% endfor %}
+        </table> 
+        
+        <br>
+        <form action = "/index" method = "post">
+        <input type = submit value = "back to index" id = "return_index">
+        </form>
+
+    </body>
+</html>
+

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset = "UTF-8">
+        <title>Magazine Co.</title>
+        <link rel="stylesheet" href="{{ 
+        url_for('static', filename='css/main.css')}}">
+    </head>
+    <body>
+
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for msg in messages %}
+                    <p>{{msg}}</p>
+                {%endfor%}
+            {%endif%}
+        {% endwith %}
+
+        <form action = "#" method = "post">
+            <p>Please log in.</p>
+            <br>
+            
+            <input type = "text" name = "name_input" placeholder="Enter Name">
+            <br>
+            <br>
+            
+            <input type = "email" name = "email_input" placeholder="Enter Email">
+            <br>
+            <br>
+            <input type ="submit" value = "Enter" id = "name_id_input">
+            <br>
+            <br>
+        </form>
+
+        <form action = "/signup" method="get">
+            <input type="submit" value="Sign up" id="sign_up">
+        </form>
+    </body>
+</html>

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset = "UTF-8">
+        <title>browse</title>
+        <link rel="stylesheet" href="{{ 
+        url_for('static', filename='css/main.css')}}">
+    </head>
+    <body>
+        <form action = "/checkout" method = "post" id="cart">
+            <p>Magazine</p>
+            <br>
+
+            <select id="magazine_input" name="magazine_input">
+                <option value ="oops">Please select a Magazine</option>
+                <option value="CWN">Civil War Navy</option>
+                <option value="WWIN">World War I Navy</option>
+                <option value="WWIIN">World War II Navy</option>
+            </select>
+            
+            <p>Volume and Issue</p>
+            <input type ="number" name = "volume_input" id="volume_input" placeholder="Volume number">
+            <br>
+            <br>
+
+
+            <select id="issue_input" name="issue_input">
+                <option value="1" id="1">Please select an Issue</option>
+                <option value="2" id="2">Spring</option>
+                <option value="3" id="3">Summer</option>
+                <option value="4" id="4">Fall</option>
+                <option value="5" id="5">Winter</option>
+            </select>
+            <br>
+            <br>
+
+            <input type="submit" value="Add to cart" id="cart">
+        </form>
+        <br>
+
+        <form action="/checkout" method="get" id = "checkout">
+            <input type="submit" value="Check out" id="checkout">
+        </form>
+
+        <br>
+        {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    {% for msg in messages %}
+                        <p>{{msg}}</p>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+        <br>
+        <br>
+        <br>
+        <form action = "/index" method = "post">
+        <input type = submit value = "back to index" id = "return_index">
+        </form> 
+        
+    </body>
+</html>

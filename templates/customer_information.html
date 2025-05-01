@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset = "UTF-8">
+        <title>checkout</title>
+        <link rel="stylesheet" href="{{ 
+        url_for('static', filename='css/main.css')}}">
+    </head>
+    <body>
+        <form action ="/signup" id="new_customer_form" method = "post">
+            
+        <p>Please enter your information</p>
+        <br>
+
+        <p>Name</p>
+        <input type ="text" name ="name_input">
+        <br>
+
+        <p>Email</p>
+        <input type ="email" name ="email_input">
+        <br>
+
+        <p>Phone number</p>
+        <input type ="text" name ="phone_number_input">
+        <br>
+
+        <p>Address</p>
+        <input type ="text" name ="address_input">
+        <br>
+        <br>
+        <input type ="submit" value ="Enter" id ="customer_registered">
+        </form>
+        <br>
+        <br>
+
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for msg in messages %}
+                    <p>{{msg}}</p>
+                {%endfor%}
+            {%endif%}
+        {% endwith %}
+        
+    </body>
+</html>
